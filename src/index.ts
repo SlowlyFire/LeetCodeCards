@@ -3,12 +3,16 @@ import express from 'express';
 import cors from 'cors';
 import mongoose from 'mongoose';
 import { connectDB } from './config/db.js';
+import { errorHandler } from './middleware/errorHandler.js';
+import patternsRouter from './routes/patterns.routes.js';
+import questionsRouter from './routes/questions.routes.js';
+import statsRouter from './routes/stats.routes.js';
 
 const app = express();
 const PORT = process.env.PORT ?? 3000;
 
 // Allow requests from any origin during development.
-// In production (Session 7) we'll restrict this to the Vercel frontend URL.
+// In production (Session 8) we'll restrict this to the Vercel frontend URL.
 app.use(cors());
 
 // Parse incoming JSON request bodies
@@ -19,9 +23,17 @@ app.get('/health', (_req, res) => {
   const dbState = mongoose.connection.readyState;
   // readyState: 0=disconnected, 1=connected, 2=connecting, 3=disconnecting
   const dbStatus = dbState === 1 ? 'connected' : 'disconnected';
-
   res.json({ status: 'ok', db: dbStatus });
 });
+
+// API routes — all prefixed with /api
+app.use('/api/patterns', patternsRouter);
+app.use('/api/questions', questionsRouter);
+app.use('/api/stats', statsRouter);
+
+// Central error handler — must be registered AFTER all routes.
+// Express knows this is an error handler because it takes 4 arguments (err, req, res, next).
+app.use(errorHandler);
 
 // Connect to MongoDB, then start the server.
 // Keeping them sequential means the server won't accept traffic before the DB is ready.
