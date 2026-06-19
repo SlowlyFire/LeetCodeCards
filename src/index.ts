@@ -7,6 +7,7 @@ import { errorHandler } from './middleware/errorHandler.js';
 import patternsRouter from './routes/patterns.routes.js';
 import questionsRouter from './routes/questions.routes.js';
 import statsRouter from './routes/stats.routes.js';
+import aiRouter from './routes/ai.routes.js';
 
 const app = express();
 const PORT = process.env.PORT ?? 3000;
@@ -30,6 +31,7 @@ app.get('/health', (_req, res) => {
 app.use('/api/patterns', patternsRouter);
 app.use('/api/questions', questionsRouter);
 app.use('/api/stats', statsRouter);
+app.use('/api/ai', aiRouter);
 
 // Central error handler — must be registered AFTER all routes.
 // Express knows this is an error handler because it takes 4 arguments (err, req, res, next).
