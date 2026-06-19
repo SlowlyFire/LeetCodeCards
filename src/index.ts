@@ -13,9 +13,34 @@ import drillRouter from './routes/drill.routes.js';
 const app = express();
 const PORT = process.env.PORT ?? 3000;
 
-// Allow requests from any origin during development.
-// In production (Session 8) we'll restrict this to the Vercel frontend URL.
-app.use(cors());
+// ── CORS allow-list ──────────────────────────────────────────────────────────
+// Only the local dev frontend, the production Vercel URL (FRONTEND_URL, set in
+// Railway), and this project's Vercel preview deployments may call the API from
+// a browser. Everything else is rejected. CORS only restricts browser requests —
+// requests with no Origin (curl, server-to-server, health checks) are allowed.
+const allowedOrigins = [
+  'http://localhost:5173', // Vite dev server
+  'https://leetcodecards-frontend.vercel.app', // production Vercel URL (hardcoded so prod never depends on the env var)
+  process.env.FRONTEND_URL, // optional override — e.g. a custom domain set in Railway
+].filter(Boolean);
+
+// Vercel preview deployments for THIS project look like
+// https://leetcodecards-frontend-<hash>-<scope>.vercel.app — allow those too so
+// PR previews can hit the backend, without opening up every *.vercel.app domain.
+const VERCEL_PREVIEW = /^https:\/\/leetcodecards-frontend-[a-z0-9-]+\.vercel\.app$/;
+
+const corsOptions: cors.CorsOptions = {
+  origin: (origin, callback) => {
+    // No Origin header → not a browser cross-origin request (curl, server-to-server)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    if (VERCEL_PREVIEW.test(origin)) return callback(null, true);
+    callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true,
+};
+
+app.use(cors(corsOptions));
 
 // Parse incoming JSON request bodies
 app.use(express.json());
