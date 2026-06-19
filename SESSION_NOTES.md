@@ -49,9 +49,45 @@
 - Zod v4 validation message for missing required field says "Invalid input: expected string, received undefined" (v4 default) rather than custom "name is required" — message is clear, can be tuned later
 
 ### Pending
-- **Session 3:** Seed script — populate DB with real patterns and questions
+- **Session 3:** Seed script + Railway deploy ✅ Done
 - **Session 4:** Spaced repetition logic — bucket promotion/demotion (`PATCH /api/questions/:id` with srBucket)
 - **Session 5:** Anthropic API integration — generate card content from problem statements
 - **Session 6:** Auth (if needed) + middleware layer
 - **Session 7:** Frontend — React + Vite + Tailwind
-- **Session 8:** Deploy — Railway (backend) + Vercel (frontend)
+- **Session 8:** Lock down CORS to Vercel URL, final prod hardening
+
+---
+
+## Session 3 — Seed Script + Railway Deployment (2026-06-19)
+
+### Built
+- `src/scripts/seed.ts` — idempotent seed script for 34 patterns + 35 questions
+  - Phase 1: inserts patterns, builds `Map<name, _id>` from existing + new docs
+  - Phase 2: resolves `patternName → _id` via map; warns + skips on unknown pattern
+  - `--reset` flag wipes both collections before seeding (destructive, ask before using)
+  - Skips by pattern name / question number — safe to re-run anytime
+  - Run via: `npm run seed`
+- `.railwayignore` — excludes `node_modules`, `dist`, `.env`, `seed/` from deploy
+- Backend deployed to Railway: `https://leetcodecards-production.up.railway.app`
+  - Auto-deploys from `main` branch on push
+  - `npm run build` (tsc) → `npm start` (node dist/index.js)
+- Production DB seeded: `leetcodecards-prod` on same Atlas cluster, separate from `leetcodecards-dev`
+
+### Decisions made
+- Dev DB: `leetcodecards-dev`, Prod DB: `leetcodecards-prod` — same Atlas cluster, separate databases
+- `PORT=3000` set explicitly in Railway env vars — Railway's auto-injected PORT wasn't matching the domain routing config
+- Seed resolves pattern references by name string (not ObjectId) — keeps seed data human-readable
+- `--reset` is not run automatically by any script — must be passed explicitly to avoid accidental data loss
+- Railway region: US East (default) — kept aligned with MongoDB Atlas cluster region to minimize DB latency
+
+### Environment variables in Railway
+- `MONGODB_URI` → `leetcodecards-prod` Atlas connection string
+- `NODE_ENV=production`
+- `PORT=3000`
+
+### Pending
+- **Session 4:** Spaced repetition logic — bucket promotion/demotion, review scheduling
+- **Session 5:** Anthropic API integration — generate card content from problem statements
+- **Session 6:** Auth (if needed) + middleware layer
+- **Session 7:** Frontend — React + Vite + Tailwind
+- **Session 8:** Lock down CORS to Vercel frontend URL, final prod hardening
