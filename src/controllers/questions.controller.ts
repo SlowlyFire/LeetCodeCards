@@ -2,14 +2,7 @@ import type { Request, Response } from 'express';
 import { Question } from '../models/Question.js';
 import { AppError } from '../lib/AppError.js';
 import { asyncHandler } from '../lib/asyncHandler.js';
-
-// Renames patternId → pattern in a lean document so the API response is cleaner.
-// Mongoose populate replaces the ObjectId with the full Pattern doc, but the key
-// stays "patternId" — this makes it "pattern" which reads better on the frontend.
-function renamePatternField(doc: Record<string, unknown>): Record<string, unknown> {
-  const { patternId, ...rest } = doc;
-  return { ...rest, pattern: patternId ?? null };
-}
+import { renamePatternField } from '../lib/renamePattern.js';
 
 // GET /api/questions?status=Solved&difficulty=Medium&pattern=<id>&search=term
 export const listQuestions = asyncHandler(async (req: Request, res: Response) => {
